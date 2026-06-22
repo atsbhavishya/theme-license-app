@@ -1,0 +1,39 @@
+{% comment %}
+  Add to layout/theme.liquid on <body>
+  Upload theme-license-check.js to theme Assets.
+{% endcomment %}
+
+<style>
+  #ats-license-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 999999;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.75);
+  }
+
+  html.ats-license-blocked #ats-license-overlay {
+    display: flex;
+  }
+
+  html.ats-license-blocked body > *:not(#ats-license-overlay) {
+    display: none !important;
+  }
+</style>
+
+<div id="ats-license-overlay">
+  {% comment %} Your custom overlay content {% endcomment %}
+  <p data-ats-license-message>Store is not authorized. Contact ATS Studio.</p>
+</div>
+
+<script>
+  window.ATS_THEME_LICENSE_DATA = {
+    shop: {{ shop.permanent_domain | json }},
+    domain: {{ shop.domain | json }},
+    template: {{ template.name | json }},
+    pageType: {{ request.page_type | json }}
+  };
+</script>
+<script src="{{ 'theme-license-check.js' | asset_url }}" defer></script>
