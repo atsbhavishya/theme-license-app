@@ -10,13 +10,27 @@ const JSON_HEADERS = { "Content-Type": "application/json" };
 async function handleProxyRequest(request: Request) {
   const url = new URL(request.url);
 
+
+  console.log("APP PROXY REQUEST URL:", request.url);
+  console.log("HAS SHOP:", url.searchParams.has("shop"));
+  console.log("HAS TIMESTAMP:", url.searchParams.has("timestamp"));
+  console.log("HAS SIGNATURE:", url.searchParams.has("signature"));
+  console.log("PATH PREFIX:", url.searchParams.get("path_prefix"));
+
   try {
     await authenticate.public.appProxy(request);
-  } catch {
+  } catch(error) {
+    console.error("APP PROXY AUTH FAILED:", error);
     return Response.json(
       {
         authorized: false,
         error: "Invalid app proxy request.",
+        debug: {
+          hasShop: url.searchParams.has("shop"),
+          hasTimestamp: url.searchParams.has("timestamp"),
+          hasSignature: url.searchParams.has("signature"),
+          pathPrefix: url.searchParams.get("path_prefix"),
+        },
       },
       { status: 400, headers: JSON_HEADERS },
     );
