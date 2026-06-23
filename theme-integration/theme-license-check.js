@@ -47,9 +47,70 @@
     document.documentElement.classList.remove("ats-license-blocked");
   }
 
+  function assetAlreadyLoaded(url) {
+    return document.querySelector(
+      '[data-ats-license-asset][href="' + url + '"], [data-ats-license-asset][src="' + url + '"]',
+    );
+  }
+
+  function injectStylesheet(url) {
+    if (assetAlreadyLoaded(url)) {
+      return Promise.resolve();
+    }
+
+    return new Promise(function (resolve) {
+      var link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = url;
+      link.setAttribute("data-ats-license-asset", "");
+      link.onload = resolve;
+      link.onerror = resolve;
+      document.head.appendChild(link);
+    });
+  }
+
+  function injectScript(url) {
+    if (assetAlreadyLoaded(url)) {
+      return Promise.resolve();
+    }
+
+    return new Promise(function (resolve) {
+      var script = document.createElement("script");
+      script.src = url;
+      script.defer = true;
+      script.setAttribute("data-ats-license-asset", "");
+      script.onload = resolve;
+      script.onerror = resolve;
+      (document.body || document.head).appendChild(script);
+    });
+  }
+
+  function loadScriptsSequential(urls) {
+    return urls.reduce(function (chain, url) {
+      return chain.then(function () {
+        return injectScript(url);
+      });
+    }, Promise.resolve());
+  }
+
+  function loadAssets(assets, onComplete) {
+    if (!assets || (!assets.css && !assets.js)) {
+      onComplete();
+      return;
+    }
+
+    var cssUrls = assets.css || [];
+    var jsUrls = assets.js || [];
+
+    Promise.all(cssUrls.map(injectStylesheet)).then(function () {
+      onComplete();
+      return loadScriptsSequential(jsUrls);
+    });
+  }
+
   function applyResult(result) {
     if (isAuthorized(result)) {
-      showTheme();
+      loadAssets(result.assets, showTheme);
       return;
     }
     showOverlayOnly();
